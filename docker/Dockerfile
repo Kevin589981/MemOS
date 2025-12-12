@@ -19,7 +19,7 @@ ENV HF_ENDPOINT=https://hf-mirror.com
 
 # Install Python packages
 COPY docker/requirements.txt .
-RUN pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt
+pip install --no-cache-dir --extra-index-url https://download.pytorch.org/whl/cpu -r requirements.txt
 
 # Copy application code
 COPY docker/ ./docker/
