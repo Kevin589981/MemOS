@@ -1,0 +1,64 @@
+# 文件路径: .github/workflows/docker-image-builder.yml
+
+name: Build and Push Docker Image on docker-build branch
+
+# 1. 定义触发条件
+on:
+  # 当有代码推送到 "docker-build" 分支时，自动触发此工作流
+  push:
+    branches: [ "docker-build" ]
+  
+  # 同时也允许你在 GitHub 的 Actions 页面手动触发
+  workflow_dispatch:
+
+# 2. 定义工作任务
+jobs:
+  build-and-push-image:
+    # 使用 GitHub 托管的最新版 Ubuntu 虚拟机作为运行环境
+    runs-on: ubuntu-latest
+
+    # 3. 授予工作流向 GitHub Packages 推送镜像的权限
+    permissions:
+      contents: read      # 授予读取代码仓库内容的权限
+      packages: write    # 授予写入(推送)包(Docker镜像)的权限
+
+    # 4. 定义具体的执行步骤
+    steps:
+      # 步骤一：检出代码
+      # 拉取你的 `docker-build` 分支的最新代码到虚拟机中
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      # 步骤二：登录到 GitHub Container Registry (ghcr.io)
+      # 这是 GitHub 官方的镜像仓库
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          # ${{ github.actor }} 会自动替换为你的 GitHub 用户名
+          username: ${{ github.actor }}
+          # GITHUB_TOKEN 是一个由 GitHub Actions 自动生成的、具有时效性的密码/令牌，用于授权
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # 步骤三：为 Docker 镜像提取元数据 (比如标签名称)
+      # 这一步会自动生成合适的镜像标签，例如：ghcr.io/your-username/memos:docker-build
+      - name: Extract Metadata for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }} # 镜像名称会自动设置为 ghcr.io/你的用户名/你的仓库名
+
+      # 步骤四：构建镜像并推送到 ghcr.io
+      # 这是最核心的一步，它会执行 docker build 和 docker push
+      - name: Build and Push Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          # Dockerfile 的上下文路径 (context) 设置为项目根目录
+          context: .
+          # 明确指定 Dockerfile 的位置
+          file: ./docker/Dockerfile
+          # 设置为 true，表示执行推送操作
+          push: true
+          # 使用上一步生成的标签
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
