@@ -3,9 +3,8 @@ name: memos-dev
 services:
   memos:
     container_name: memos-api-docker
-    build:
-      context: ..
-      dockerfile: docker/Dockerfile
+    # 将下面的地址替换为你自己的镜像地址
+    image: ghcr.io/kevin589981/memos:docker-build
     ports:
       - "8000:8000"
     env_file:

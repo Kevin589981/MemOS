@@ -1,0 +1,10 @@
+sudo mkdir -p /etc/systemd/system/docker.service.d
+sudo nano /etc/systemd/system/docker.service.d/http-proxy.conf
+sudo systemctl daemon-reload
+sudo systemctl restart docker
+docker compose logs -f memos
+
+
+sudo systemctl stop docker
+sudo systemctl disable docker
+sudo systemctl status docker
